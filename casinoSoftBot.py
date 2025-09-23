@@ -107,8 +107,10 @@ async def signal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🎯 100₴", callback_data="amt:100"),
          InlineKeyboardButton("✍ Ввести сумму", callback_data="amt:custom")]
     ]
-    await update.message.reply_text("Выбери сумму ставки:", reply_markup=InlineKeyboardMarkup(keyboard))
-
+    if update.callback_query:
+        await update.callback_query.message.reply_text(signal, reply_markup=InlineKeyboardMarkup(keyboard))
+    else:
+        await update.message.reply_text(signal, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def amount_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = load_db()
