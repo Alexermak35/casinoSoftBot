@@ -107,10 +107,8 @@ async def signal_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🎯 100₴", callback_data="amt:100"),
          InlineKeyboardButton("✍ Ввести сумму", callback_data="amt:custom")]
     ]
-    if update.callback_query:
-        await update.callback_query.message.reply_text(signal, reply_markup=InlineKeyboardMarkup(keyboard))
-    else:
-        await update.message.reply_text(signal, reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("Выбери сумму ставки:", reply_markup=InlineKeyboardMarkup(keyboard))
+
 
 async def amount_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = load_db()
@@ -186,6 +184,7 @@ async def change_amount_callback(update: Update, context: ContextTypes.DEFAULT_T
     await q.message.reply_text("Введи сумму в гривнах:")
     return WAIT_AMOUNT
 
+
 # ====== OTHER COMMANDS ======
 async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = load_db()
@@ -249,6 +248,7 @@ async def post_init(app: Application):
 
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text))
 
     conv = ConversationHandler(
         entry_points=[
