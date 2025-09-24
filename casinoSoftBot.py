@@ -221,7 +221,7 @@ async def instruction(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = load_db()
     if str(update.effective_user.id) in db:
-        await update.message.reply_text(f"Ваш доступ: {CHANNEL_LINK}")
+        await update.message.reply_text(f"Вам открыт доступ!")
     else:
         kb = InlineKeyboardMarkup([
             [InlineKeyboardButton("🔗 Регистрация", url=REG_LINK)],
@@ -243,7 +243,7 @@ async def post_init(app: Application):
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
         BotCommand("check", "Проверить доступ к каналу"),
-        BotCommand("cancel", "Отмена"),
+
     ])
 
 def main():
