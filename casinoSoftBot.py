@@ -39,10 +39,11 @@ def save_db(db):
     except Exception as e:
         logger.error(f"DB save error: {e}")
 
-# ====== START FLOW ======
+# ---- START ----
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db = load_db()
+
     if str(user.id) not in db:
         text = (
             f"Привет, {user.first_name}! 🚀\n\n"
@@ -54,11 +55,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ Я зарегистрировался", callback_data="registered")]
         ])
         await update.message.reply_text(text, reply_markup=kb)
-        return ConversationHandler.END
+        # 👇 Keep the conversation open — wait for button press
+        return WAIT_ID
     else:
         await update.message.reply_text("✅ Ты уже зарегистрирован. Используй меню ниже.")
         return ConversationHandler.END
 
+
+# ---- REGISTERED BUTTON ----
 async def registered_pressed(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     await q.answer()
@@ -69,6 +73,8 @@ async def registered_pressed(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     return WAIT_ID
 
+
+# ---- RECEIVE ID ----
 async def receive_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     entered_id = (update.message.text or "").strip()
@@ -219,7 +225,21 @@ async def instruction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg)
 
 
-
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Works both for messages and callback queries
+    if update.message:
+        await update.message.reply_text(
+            "🚫 Действие отменено. Нажми /start, чтобы начать заново.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    elif update.callback_query:
+        q = update.callback_query
+        await q.answer()
+        await q.message.reply_text(
+            "🚫 Действие отменено. Нажми /start, чтобы начать заново.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return ConversationHandler.END
 
 # ====== MAIN ======
 async def post_init(app: Application):
@@ -229,22 +249,25 @@ async def post_init(app: Application):
         BotCommand("history", "История сигналов"),
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
-
+        BotCommand("cancel", "Отмена"),
     ])
 
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text))
+
 
     conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("start", start),
-            CallbackQueryHandler(registered_pressed, pattern="^registered$"),
-        ],
+        entry_points=[CommandHandler("start", start)],
         states={
-            WAIT_ID: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id)],
-            WAIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text)],
+            WAIT_ID: [
+                CallbackQueryHandler(registered_pressed, pattern="^registered$"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id),
+            ],
+            WAIT_AMOUNT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text)
+            ],
         },
+        fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True
     )
 
