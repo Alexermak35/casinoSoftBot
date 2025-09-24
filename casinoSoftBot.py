@@ -264,7 +264,8 @@ def main():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id),
             ],
             WAIT_AMOUNT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text)
+                MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text),
+                CallbackQueryHandler(change_amount_callback, pattern="^change_amount$")
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
@@ -280,7 +281,7 @@ def main():
 
 
     app.add_handler(CallbackQueryHandler(amount_button, pattern=r"^amt:"))
-    app.add_handler(CallbackQueryHandler(change_amount_callback, pattern=r"^change_amount$"))
+
 
     logger.info("Bot is running...")
     app.run_polling(drop_pending_updates=True)
