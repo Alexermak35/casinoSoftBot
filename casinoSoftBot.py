@@ -242,7 +242,7 @@ async def post_init(app: Application):
         BotCommand("history", "История сигналов"),
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
-        BotCommand("check", "Проверить доступ к каналу"),
+        BotCommand("check", "Проверить доступ"),
 
     ])
 
