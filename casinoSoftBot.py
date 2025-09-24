@@ -219,9 +219,7 @@ async def instruction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg)
 
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Окей, отмена. Нажми /start, чтобы начать заново.")
-    return ConversationHandler.END
+
 
 # ====== MAIN ======
 async def post_init(app: Application):
@@ -231,7 +229,7 @@ async def post_init(app: Application):
         BotCommand("history", "История сигналов"),
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
-        BotCommand("cancel", "Отмена"),
+
     ])
 
 def main():
@@ -247,7 +245,6 @@ def main():
             WAIT_ID: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id)],
             WAIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text)],
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True
     )
 
