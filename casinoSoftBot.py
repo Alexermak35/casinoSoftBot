@@ -255,7 +255,6 @@ async def post_init(app: Application):
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
 
-
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -265,12 +264,16 @@ def main():
             ],
             WAIT_AMOUNT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text),
-                CallbackQueryHandler(change_amount_callback, pattern="^change_amount$")
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True
     )
+
+    app.add_handler(conv)
+
+    app.add_handler(CallbackQueryHandler(amount_button, pattern=r"^amt:"))
+    app.add_handler(CallbackQueryHandler(change_amount_callback, pattern=r"^change_amount$"))  # 👈 add this
 
     app.add_handler(conv)
 
