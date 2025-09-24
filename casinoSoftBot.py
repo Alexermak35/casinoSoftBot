@@ -231,7 +231,6 @@ async def post_init(app: Application):
         BotCommand("history", "История сигналов"),
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
-        BotCommand("check", "Проверить доступ к каналу"),
         BotCommand("cancel", "Отмена"),
     ])
 
@@ -258,7 +257,7 @@ def main():
     app.add_handler(CommandHandler("history", history))
     app.add_handler(CommandHandler("profile", profile))
     app.add_handler(CommandHandler("instruction", instruction))
-    app.add_handler(CommandHandler("check", check))
+
 
     app.add_handler(CallbackQueryHandler(amount_button, pattern=r"^amt:"))
     app.add_handler(CallbackQueryHandler(change_amount_callback, pattern=r"^change_amount$"))
