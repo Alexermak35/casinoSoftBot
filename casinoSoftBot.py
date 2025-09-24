@@ -39,11 +39,10 @@ def save_db(db):
     except Exception as e:
         logger.error(f"DB save error: {e}")
 
-# ---- START ----
+# ====== START FLOW ======
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db = load_db()
-
     if str(user.id) not in db:
         text = (
             f"Привет, {user.first_name}! 🚀\n\n"
@@ -55,14 +54,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ Я зарегистрировался", callback_data="registered")]
         ])
         await update.message.reply_text(text, reply_markup=kb)
-        # 👇 Keep the conversation open — wait for button press
-        return WAIT_ID
+        return WAIT_ID   # 👈 conversation remains open
     else:
         await update.message.reply_text("✅ Ты уже зарегистрирован. Используй меню ниже.")
         return ConversationHandler.END
 
-
-# ---- REGISTERED BUTTON ----
 async def registered_pressed(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     await q.answer()
@@ -73,8 +69,6 @@ async def registered_pressed(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     return WAIT_ID
 
-
-# ---- RECEIVE ID ----
 async def receive_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     entered_id = (update.message.text or "").strip()
@@ -220,25 +214,24 @@ async def instruction(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/history — история\n"
         "/profile — мой профиль\n"
         "/instruction — инструкция\n"
-
+        "/check — восстановить доступ к каналу"
     )
     await update.message.reply_text(msg)
 
+async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db = load_db()
+    if str(update.effective_user.id) in db:
+        await update.message.reply_text(f"Ваш доступ: {CHANNEL_LINK}")
+    else:
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔗 Регистрация", url=REG_LINK)],
+            [InlineKeyboardButton("✅ Я зарегистрировался", callback_data="registered")]
+        ])
+        await update.message.reply_text("Вы ещё не прислали ID. Зарегистрируйтесь по ссылке и вернитесь сюда.",
+                                        reply_markup=kb)
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Works both for messages and callback queries
-    if update.message:
-        await update.message.reply_text(
-            "🚫 Действие отменено. Нажми /start, чтобы начать заново.",
-            reply_markup=ReplyKeyboardRemove()
-        )
-    elif update.callback_query:
-        q = update.callback_query
-        await q.answer()
-        await q.message.reply_text(
-            "🚫 Действие отменено. Нажми /start, чтобы начать заново.",
-            reply_markup=ReplyKeyboardRemove()
-        )
+    await update.message.reply_text("Окей, отмена. Нажми /start, чтобы начать заново.")
     return ConversationHandler.END
 
 # ====== MAIN ======
@@ -249,45 +242,54 @@ async def post_init(app: Application):
         BotCommand("history", "История сигналов"),
         BotCommand("profile", "Мой профиль"),
         BotCommand("instruction", "Подробная инструкция"),
+        BotCommand("check", "Проверить доступ к каналу"),
         BotCommand("cancel", "Отмена"),
     ])
 
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
 
-    conv = ConversationHandler(
+    # ---- Registration conversation ----
+    reg_conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             WAIT_ID: [
                 CallbackQueryHandler(registered_pressed, pattern="^registered$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id),
             ],
-            WAIT_AMOUNT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text),
-            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True
     )
 
-    app.add_handler(conv)
+    # ---- Betting conversation ----
+    bet_conv = ConversationHandler(
+        entry_points=[
+            CommandHandler("signal", signal_cmd),
+            CallbackQueryHandler(amount_button, pattern=r"^amt:"),
+            CallbackQueryHandler(change_amount_callback, pattern=r"^change_amount$"),
+        ],
+        states={
+            WAIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, amount_text)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+        allow_reentry=True
+    )
 
-    app.add_handler(CallbackQueryHandler(amount_button, pattern=r"^amt:"))
-    app.add_handler(CallbackQueryHandler(change_amount_callback, pattern=r"^change_amount$"))  # 👈 add this
+    # Add both
+    app.add_handler(reg_conv)
+    app.add_handler(bet_conv)
 
-    app.add_handler(conv)
-
-    app.add_handler(CommandHandler("signal", signal_cmd))
+    # Other commands
     app.add_handler(CommandHandler("history", history))
     app.add_handler(CommandHandler("profile", profile))
     app.add_handler(CommandHandler("instruction", instruction))
-
-
-    app.add_handler(CallbackQueryHandler(amount_button, pattern=r"^amt:"))
-
+    app.add_handler(CommandHandler("check", check))
 
     logger.info("Bot is running...")
     app.run_polling(drop_pending_updates=True)
+
+
 
 if __name__ == "__main__":
     main()
