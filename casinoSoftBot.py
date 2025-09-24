@@ -207,28 +207,17 @@ async def instruction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
         "📖 Инструкция:\n\n"
         "1️⃣ Зарегистрируйся через нашу ссылку.\n"
-        "2️⃣ Введи свой ID (7–10 цифр).\n"
+        "2️⃣ Введи свой ID.\n"
         "3️⃣ Все ставки указываются в гривнах (₴).\n\n"
         "Команды:\n"
         "/signal — получить сигнал\n"
         "/history — история\n"
         "/profile — мой профиль\n"
         "/instruction — инструкция\n"
-        "/check — восстановить доступ к каналу"
+
     )
     await update.message.reply_text(msg)
 
-async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    db = load_db()
-    if str(update.effective_user.id) in db:
-        await update.message.reply_text(f"Ваш доступ: {CHANNEL_LINK}")
-    else:
-        kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 Регистрация", url=REG_LINK)],
-            [InlineKeyboardButton("✅ Я зарегистрировался", callback_data="registered")]
-        ])
-        await update.message.reply_text("Вы ещё не прислали ID. Зарегистрируйтесь по ссылке и вернитесь сюда.",
-                                        reply_markup=kb)
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Окей, отмена. Нажми /start, чтобы начать заново.")
