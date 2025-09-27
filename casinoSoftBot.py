@@ -14,7 +14,7 @@ from telegram.ext import (
 
 # ====== CONFIG ======
 TOKEN = "8486417293:AAHtCmgZ33kqDf3Pr1RCxgyqlnUKMKa5rMk"
-REG_LINK = "https://1wvpki.com/v3/lucky-jet-updated?p=b38d"
+REG_LINK = "https://1wfzws.life/v3/lucky-jet-updated?p=b38d"
 CHANNEL_LINK = "https://t.me/AIJetAnalyzer_bot"
 DB_PATH = Path(__file__).parent / "users_db.json"
 
